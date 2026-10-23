@@ -40,10 +40,10 @@ PY
     cd "$copy"
     export NEMU_HOME="$copy"
     # Disable upstream's automatic git-add/commit recipes.
-    make __NOT_DEFINED=1 "$copy/tools/kconfig/build/conf" "$copy/tools/fixdep/build/fixdep"
+    make git_commit= "$copy/tools/kconfig/build/conf" "$copy/tools/fixdep/build/fixdep"
     tools/kconfig/build/conf --olddefconfig Kconfig
     tools/kconfig/build/conf --syncconfig Kconfig
-    make __NOT_DEFINED=1 -j"$jobs"
+    make git_commit= -j"$jobs"
 ) > "$out/nemu-build.log" 2>&1
 cp "$copy/.config" "$out/nemu.config"
 

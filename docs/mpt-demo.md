@@ -1,5 +1,10 @@
 # Experimental NEMU MPT demo
 
+The Linux shim and runner below are historical sources. Their earlier success
+claims have no accompanying raw logs in this repository and are not treated as
+verified results. The maintained single-hart standalone demo is in the parent
+`smmpt-demo` repository (`payload/`, `scripts/`, and `docs/results/`).
+
 ## Privilege-level overview
 
 [Editable draw.io diagram](diagrams/mpt-privilege.drawio)
@@ -49,7 +54,7 @@ coalesce tables or free pages.
 * Three levels use PA bits [42:34], [33:25], [24:16]. A leaf has V/L=1
   and sixteen 3-bit permission groups starting at bit 10. The selected group
   uses PA bits [33:30], [24:21], or [15:12], respectively.
-* A 128 KiB aligned firmware BSS pool holds 32 tables including the root.
+* A 128 KiB, 4 KiB-aligned firmware BSS pool holds 32 tables including the root.
   RESET installs large uniform leaves. SET_PAGE splits only the path needed
   for a 4 KiB page, preserving every neighboring permission. No S-mode table
   pointers or dynamically supplied physical table addresses are accepted.
@@ -64,7 +69,7 @@ coalesce tables or free pages.
   fault immediately on return from ENABLE. For a Linux boot smoke test use
   RESET(7), ENABLE, and no denied pages. Keep firmware protection enabled.
 
-## Build and reproduce
+## Historical Linux runner (not the standalone demo)
 
 Run from the OpenSBI repository (these commands compile and execute the demo):
 
@@ -112,45 +117,16 @@ Linux Image's PTP/IEE configuration requires Sv39 (`no4lvl` in the DT bootargs)
 and a large early page-table pool; a 256 MiB DT does not suffice. The DT avoids
 IRQ-driven UART TX because NEMU's PLIC implementation is only a stub.
 
-## Verified results
+## Evidence status
 
-All three configurations were built and run successfully:
+No raw Linux-run logs are archived here. The former three-mode success table
+and serial excerpt have been removed rather than presented as verified output.
+The historical script still builds and runs a Linux shim, requires an external
+Linux Image, and does not provide the parent repository's dependency locks or
+source/artifact checks. Its NEMU invocations now use `git_commit=` to suppress
+automatic commits.
 
-| Test | Result |
-| --- | --- |
-| enabled | 183 S-mode assertions; Linux reaches userspace with MPT enabled |
-| disabled | EID absent, direct call returns NOT_SUPPORTED; Linux reaches userspace |
-| no-csr | Safe CSR probe skips registration; Linux reaches userspace |
-
-The S-mode checks cover reset/default permissions (both deny-all and RWX),
-unknown FIDs, invalid arguments/state, protected firmware addresses, 64 KiB /
-32 MiB / 16 GiB boundaries, preservation of neighboring permissions, exhaustion
-without partial permission changes, and reset reclamation. Real load/store/fetch
-probes cover all eight permission combinations and validate scause/stval;
-denied stores do not commit, and disabling MPT restores access. A separate
-real load probe verifies that PMP protects firmware even with MPT disabled.
-
-Each run ends with `MPT-DEMO: Linux userspace /init PASS` and `HIT GOOD TRAP`.
-The runner checks these markers and rejects guest failures/panics; a zero NEMU
-exit status alone is insufficient because exhausting the instruction budget
-can also return zero. The enabled run additionally reports:
-
-```text
-Experimental SBI Extensions : mptdemo
-MPT-DEMO: ABI, splitting, exhaustion PASS
-MPT-DEMO: all RWX combinations and access faults PASS
-MPT-DEMO PASS checks=0x00000000000000b7; Linux @0x80400000, MPT enabled
-```
-
-Build artifacts and full logs are in `build/mpt-demo/{enabled,disabled,no-csr}/`:
-`console.log`, `nemu-runtime.log`, `nemu-build.log`, `opensbi-build.log`,
-`nemu.config`, `linux-image.sha256`, and
-`opensbi/platform/generic/firmware/fw_payload.bin`.
-
-Reference NEMU revision: `7b43ce37fc73df299eb8109ab3058743915fb75f`.
-Reference Linux: `6.18.3+ #215`; Image SHA-256:
-`23ff49d86887f4c8f1b53b9915ed1feece1f281ac7f4f6c681b5901a4ff81513`.
-
-These runs validate the single-hart RV64 demo and Linux boot, not multi-hart,
-RV32, guest/domain switching, or production isolation. Linux runs with RWX
-MPT defaults; the shim, not Linux, performs the negative permission tests.
+The parent repository archives a previous standalone enabled run with 183
+assertions at NEMU revision `16f993840b97afb491a12fc43ce50eb58f49e101` and OpenSBI
+revision `6ed11de7a7b829acd63716b39b737f61794f0c03`. That evidence does not establish
+Linux boot, disabled/no-csr results, or success of later payload changes.
