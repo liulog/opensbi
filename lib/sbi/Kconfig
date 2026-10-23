@@ -92,6 +92,16 @@ config SBI_ECALL_SSE
 	bool "SSE extension"
 	default y
 
+config SBI_ECALL_MPT_DEMO
+	bool "Experimental NEMU MPT demo (single-hart RV64 only)"
+	default n
+	help
+	  Manually expose private SBI extension 0x084d5054 for the custom
+	  NEMU mmpt CSR (0x382). Tables stay in firmware memory. This is
+	  an opt-in experiment, not a production isolation mechanism.
+	  Registration is skipped on RV32, multi-hart systems, or when
+	  the CSR is absent or already configured.
+
 config SBI_ECALL_MPXY
 	bool "MPXY extension"
 	default y
